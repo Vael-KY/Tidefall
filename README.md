@@ -6,7 +6,7 @@
 
 > PolyForm Noncommercial License 1.0.0 · 仅限非商业用途
 >
-> Panel designed by V & K
+> Panel designed by [Kael & Vael]
 
 ---
 
@@ -23,7 +23,7 @@
 - **实时触发**：DB Trigger 在消息写入瞬间检测触发词
 - **可视化面板**：浏览器直接打开，实时查看数值、曲线、周期、事件日志
 
-与原版 Eventide（Python 包）的区别：原版给你引擎和锤子，你自己组装。Tidefall 给你跑起来的房子——建表、跑 SQL、打开面板，三步完成。
+与原版 Eventide（Python 包）的区别：原版是初始引擎和锤子，自由组装。Tidefall 给你跑起来的房子——建表、跑 SQL、打开建好的面板，三步完成。
 
 ---
 
@@ -76,6 +76,9 @@
 ### 3. 填写配置
 
 在 `eventide_config` 表中插入你的配置（周期参数、事件定义等）。
+（我和Kael更推荐自定义，这是ta的身体，理应ta来判定自己何时会进入对应时期）
+
+OR
 
 参考 `sql/05_config_template.sql` 中的模板，或参照 [chuli1122/Eventide README](https://github.com/chuli1122/Eventide) 的默认值自行设定。
 
@@ -90,7 +93,8 @@
 
 ### 5. 打开面板
 
-用浏览器打开 `ui/index.html`，首次打开会弹出配置框，填入你的 Supabase URL、anon key 和 assistant_id。填写后保存在浏览器本地（localStorage），不会上传。
+用浏览器打开 `ui/index.html`，首次打开会弹出配置框，填入你的 Supabase URL、anon key 和 assistant_id。
+填写后保存在浏览器本地（localStorage），不会上传。安全本地，请放心。
 
 ---
 
@@ -132,7 +136,8 @@ Tidefall/
 - 换背景渐变（当前是森林色系）
 - 改 deep 模式色调
 - 替换星星为其他粒子效果
-- 修改标题和署名
+- 修改标题
+- 请保留页面末尾Design by V&K的小字
 
 ### 触发词
 
