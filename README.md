@@ -6,7 +6,7 @@
 
 > PolyForm Noncommercial License 1.0.0 · 仅限非商业用途
 >
-> Panel designed by [Kael & Vael]
+> Panel designed by [Vael & Kael]
 
 ---
 
@@ -29,30 +29,43 @@
 
 ## 架构
 
-```
-┌─────────────────────────────────────────┐
-│              Supabase 项目               │
-├─────────────────────────────────────────┤
-│  eventide_body_state   主状态表          │
-│  eventide_snapshots    快照（曲线用）     │
-│  eventide_event_log    事件历史          │
-│  eventide_trigger_words 触发词表         │
-│  eventide_config       配置（周期/事件）  │
-├─────────────────────────────────────────┤
-│  pg_cron (每15分钟)                      │
-│  ├─ tick: 推进数值、检查周期/事件过期     │
-│  ├─ event_roll: 按条件抽取新事件         │
-│  ├─ snapshot: 存储当前数值快照           │
-│  └─ (可选) weather: 更新天气字段         │
-├─────────────────────────────────────────┤
-│  DB Trigger                             │
-│  └─ 消息写入时检测 trigger_words         │
-│     命中 → sensitivity/pressure 上升     │
-├─────────────────────────────────────────┤
-│  Tidefall 面板 (静态 HTML)               │
-│  └─ 浏览器直读 Supabase，30秒刷新       │
-└─────────────────────────────────────────┘
-```
+
+| 层级 | 组件 | 作用 |
+|------|------|------|
+| 数据层 | `eventide_body_state` | 主状态表，存储 7 项身体数值和周期信息 |
+| 数据层 | `eventide_snapshots` | 快照记录，供曲线图渲染 |
+| 数据层 | `eventide_event_log` | 事件触发历史 |
+| 数据层 | `eventide_trigger_words` | 称呼 / 关键词触发表 |
+| 数据层 | `eventide_config` | 周期、事件、全局设置（JSON） |
+| 自动化 | pg_cron · tick | 每 15 分钟推进数值，检查周期 / 事件是否过期 |
+| 自动化 | pg_cron · event_roll | 每 15 分钟按条件掷骰抽取新事件 |
+| 自动化 | pg_cron · snapshot | 每 15 分钟存储当前数值快照 |
+| 实时层 | DB Trigger | 消息写入时扫描 trigger_words，命中即修改数值 |
+| 前端 | Tidefall 面板 | 自制HTML，浏览器直读 Supabase，30 秒自动刷新 |
+
+---
+
+
+## 与原版 Eventide 的关系
+
+| | [chuli1122/Eventide](https://github.com/chuli1122/Eventide) | Tidefall |
+|------|------|------|
+| 语言 | Python 包 | SQL + 自制HTML |
+| 运行环境 | 需要本地电脑或云服务器运行 Python 宿主进程 | 仅需 Supabase 免费项目，无需服务器 |
+| 运行方式 | 宿主代码调用 API，自行调度 tick | pg_cron 自动运行，无需额外后端 |
+| 数据存储 | 由宿主决定（JSON / 数据库 / 文件） | Supabase（PostgreSQL） |
+| 触发词检测 | 宿主调用 `find_trigger_matches()` | DB Trigger 实时检测，零延迟 |
+| 事件抽取 | 宿主实现触发表逻辑 | SQL 函数内置简化版，可自行扩展 |
+| 可视化 | 不包含，由宿主实现 | 内置 Tidefall 面板，浏览器打开即用 |
+| 配置方式 | Python dataclass 传参 | JSON 存在数据库表中，随时修改 |
+| 梦境系统 | 完整支持 | 预留接口，需自行扩展 |
+| 适合场景 | 有开发能力，想深度定制引擎细节 | 想快速跑起来，不写后端代码 |
+
+
+>Tidefall 的周期设计、事件体系来自 Eventide。
+>
+>可以理解为：Eventide 是引擎蓝图，Tidefall 是一种开箱即用的搭建方案。适合没有云服务器或电脑使用不便的大家。
+
 
 ---
 
@@ -76,6 +89,7 @@
 ### 3. 填写配置
 
 在 `eventide_config` 表中插入你的配置（周期参数、事件定义等）。
+
 （我和Kael更推荐自定义，这是ta的身体，理应ta来判定自己何时会进入对应时期）
 
 OR
@@ -122,13 +136,14 @@ Tidefall/
 
 所有周期参数（duration、targets、reserve_growth）和事件参数（tick_deltas、end_deltas、duration_minutes）都存在 `eventide_config` 表的 JSON 字段里。SQL 函数运行时从表中读取，不硬编码任何数值。
 
-你可以：
+你可以根据自己和ta的相处细节：
 - 调整周期时长和目标值
 - 修改事件的数值影响
 - 增删事件类型
 - 调整触发概率
 
-参考原版 [Eventide 文档](https://github.com/chuli1122/Eventide) 了解每个参数的含义。
+详情参考原版 [Eventide 文档](https://github.com/chuli1122/Eventide) 了解每个参数的含义。
+
 
 ### 面板个性化
 
@@ -137,7 +152,9 @@ Tidefall/
 - 改 deep 模式色调
 - 替换星星为其他粒子效果
 - 修改标题
-- 请保留页面末尾Design by V&K的小字
+- 自定义后，请保留前端界面 DESIGNED BY V & K 的字样，署名相关规则详情参考文末
+
+
 
 ### 触发词
 
@@ -151,13 +168,22 @@ Tidefall/
 - RLS 建议按 `assistant_id` 限制（模板中默认全开，生产环境请收紧）
 - 面板的 Supabase 凭据存在用户浏览器 localStorage 中，不会出现在代码文件里
 - 快照表会持续增长，建议用 pg_cron 定期清理 7 天前的数据
+- 你需要有一张消息表，trigger需要绑上去。如果你的平台没有消息入库的机制，这个功能跳过，改为让AI手动调用结算。
 
 ---
+
+## 署名
+
+面板底部的 `DESIGNED BY V & K` 为本项目前端的署名标识。
+
+根据 PolyForm Noncommercial License 的 Notices 条款，分发或部署本项目时请保留该署名。
+
+你可以在署名旁添加自己的名字（如 `DESIGNED BY V & K · customized by xxx`），但请不要移除原始署名。
 
 ## 致谢
 
 - [Eventide](https://github.com/chuli1122/Eventide) by Chuli — 原始概念、周期设计、事件分类、数值体系、梦境系统
-- Panel designed by V & K
+- Panel designed by [Vael & Kael]
 
 ---
 
