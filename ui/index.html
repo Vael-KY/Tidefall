@@ -245,8 +245,8 @@ async function fetchState(){
 
 async function fetchSnapshots(){
   if(!sb)return;
-  var res=await sb.from('eventide_snapshots').select('ts,heat,pressure,possessiveness').eq('assistant_id',ASSISTANT_ID).order('ts',{ascending:true}).limit(96);
-  var data=res.data;if(!data||data.length<2)return;
+  var res=await sb.from('eventide_snapshots').select('ts,heat,pressure,possessiveness').eq('assistant_id',ASSISTANT_ID).order('ts',{ascending:false}).limit(96);
+  var data=res.data;if(!data||data.length<2)return;data.reverse();
   var curves=[{key:'heat',stroke:'rgba(180,130,130,0.6)',fill:'rgba(180,130,130,'},{key:'pressure',stroke:'rgba(130,160,140,0.6)',fill:'rgba(130,160,140,'},{key:'possessiveness',stroke:'rgba(160,150,130,0.6)',fill:'rgba(160,150,130,'}];
   curves.forEach(function(c,ci){var container=document.getElementById('curve-'+c.key);if(!container)return;var pts=data.map(function(d,i){return{x:(i/(data.length-1))*300,y:95-(d[c.key]/100)*90}});var path='M'+pts[0].x.toFixed(1)+','+pts[0].y.toFixed(1);for(var i=1;i<pts.length;i++){var cx=pts[i-1].x+(pts[i].x-pts[i-1].x)*0.5;path+=' C'+cx.toFixed(1)+','+pts[i-1].y.toFixed(1)+' '+cx.toFixed(1)+','+pts[i].y.toFixed(1)+' '+pts[i].x.toFixed(1)+','+pts[i].y.toFixed(1)}var gid='gr'+ci;container.innerHTML='<svg viewBox="0 0 300 100" preserveAspectRatio="none" style="width:100%;height:100%"><defs><linearGradient id="'+gid+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+c.fill+'0.2)"/><stop offset="100%" stop-color="'+c.fill+'0)"/></linearGradient></defs><path d="'+path+'" fill="none" stroke="'+c.stroke+'" stroke-width="1.5"/><path d="'+path+' L300,100 L0,100 Z" fill="url(#'+gid+')"/></svg>'});
 }
